@@ -1,11 +1,11 @@
-#Understand Features From Observations 
+# Understand Features From Observations 
 
 The ``agent`` class has access to ``obs``, which provides information to support making decision 
 (return the ``FunctionCall`` from ``actions`` lib).
 
 ``obs.observation`` is the dictionary for those information.
 
-##How to play with it?
+## How to play with it?
 
 * ``obs.observation['screen']``
 
