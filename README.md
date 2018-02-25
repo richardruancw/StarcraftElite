@@ -7,6 +7,10 @@ Bowen Yao, Chuanwei Ruan, Mingxiang Chen
 
 ## Dependency
 
+* Python3
+
+This project is for Python3 only.
+
 * PySC2
 
 Please follow the intruction from deepmind to install the pysc2 and related softwares.
