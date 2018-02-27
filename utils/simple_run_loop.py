@@ -19,8 +19,7 @@ def simple_run_loop(simple_env, simple_agent, max_frames=0):
                 feedback = simple_env.step(actions)
                 model_features = feedback.features
                 reward = feedback.reward
-                if reward != 0:
-                    print(reward)
+
     except KeyboardInterrupt:
         pass
     finally:
