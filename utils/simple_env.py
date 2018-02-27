@@ -46,6 +46,7 @@ class SimpleScEnvDiscrete:
 
     def reset(self):
         self.last_timestep = self._env.reset()[0]
+        self.update()
         return self.get_features()
 
     def _operation_func_factory(self, op_type, direction):
@@ -140,7 +141,7 @@ class DumbAgent:
         self.num_actions = num_actions
 
     def step(self, features):
-        time.sleep(0.1)
+        # time.sleep(0.1)
         c = np.random.randint(0, self.num_actions)
         return c
 
