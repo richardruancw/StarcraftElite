@@ -50,7 +50,7 @@ def run_loop(env, agent, max_episodes = 30000, max_steps = 2000000):
                     if env.last:
                         break
                     step += 1
-                    print "Step: "+str(step)
+                    print "Episode: "+str(episode)+"  Step: "+str(step)
             print('game over')
             save_path = saver.save(sess, "my_net/save_net.ckpt")
             print("Save to path: ", save_path)
