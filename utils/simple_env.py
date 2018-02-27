@@ -31,7 +31,8 @@ class SimpleScEnvDiscrete:
         self.split_base = split_base
 
         # maintain the timestep to get pysc2 env data from last step
-        self.last_timestep = self._env.step([actions.FunctionCall(_NO_OP, [])])[0]
+        self.last_timestep = None
+        self.reset()
 
         # initialize functions
         self._populate_actions_funcs()
@@ -42,6 +43,10 @@ class SimpleScEnvDiscrete:
 
         # key environment variables
         self.last = False
+
+    def reset(self):
+        self.last_timestep = self._env.reset()[0]
+        return self.get_features()
 
     def _operation_func_factory(self, op_type, direction):
         def f(env):
@@ -108,10 +113,10 @@ class SimpleScEnvDiscrete:
         print("Populated move/attact actions")
 
     def get_reward(self):
-        self.compute_reward(self.last_timestep)
+        return self.compute_reward(self.last_timestep)
 
     def get_features(self):
-        self.extract_features(self.last_timestep)
+        return self.extract_features(self.last_timestep)
 
     def compute_reward(self, timestep):
         return timestep.reward
@@ -124,6 +129,7 @@ class SimpleScEnvDiscrete:
 
     def step(self, act_idx):
         self.last_timestep = self.wrapped_actions[act_idx](self._env)[0]
+
         self.update()
         feedback = namedtuple('feedback', ['features', 'reward'])
         return feedback(self.get_features(), self.get_reward())

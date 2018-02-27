@@ -2,7 +2,7 @@ import sys
 
 from pysc2.env import sc2_env
 from pysc2.lib import actions
-from pysc2.env import run_loop
+from utils import run_loop
 from absl import flags
 
 from agents.marine_script import SimpleScriptAgent, TacticScriptAgent
@@ -14,7 +14,7 @@ def main():
     flags.FLAGS(sys.argv)
     with sc2_env.SC2Env(map_name="DefeatZerglingsAndBanelings",
                         step_mul=1,
-                        visualize=True,
+                        visualize=False,
                         game_steps_per_episode=steps * step_mul) as env:
         # agent = DefeatZerglingsSimple()
         agent = TacticScriptAgent()
