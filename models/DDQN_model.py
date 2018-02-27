@@ -58,15 +58,18 @@ class DDQN:
                     kernel_size=[3, 3],
                     padding="same",
                     activation=tf.nn.relu)
+            print tf.get_shape().as_list(conv1)
             pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+            print tf.get_shape().as_list(pool1)
             conv2 = tf.layers.conv2d(
                     inputs=pool1,
                     filters=64,
                     kernel_size=[3, 3],
                     padding="same",
                     activation=tf.nn.relu)
+            print tf.get_shape().as_list(conv2)
             pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[4, 4], strides=4)
-
+            print tf.get_shape().as_list(pool2)
             pool2_flat = tf.reshape(pool2, tf.stack([-1, 8 * 8 * 64]))
 
             dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
