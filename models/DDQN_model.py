@@ -49,7 +49,7 @@ class DDQN:
 
         # ------------------ build evaluate_net ------------------
         # print type(self.s)
-        _input = tf.reshape(self.s, tf.stack([None, 17, 64, 64]))
+        _input = tf.reshape(self.s, tf.stack([-1, 17, 64, 64]))
 
         with tf.variable_scope('eval_net'):
             conv1 = tf.layers.conv2d(
