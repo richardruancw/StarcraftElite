@@ -50,6 +50,7 @@ class DDQN:
         # ------------------ build evaluate_net ------------------
         # print type(self.s)
         _input = tf.reshape(self.s, tf.stack([-1, 17, 64, 64]))
+        _input = tf.transpose(_input, perm=[1,2,0])
 
         with tf.variable_scope('eval_net'):
             conv1 = tf.layers.conv2d(
@@ -58,18 +59,18 @@ class DDQN:
                     kernel_size=[3, 3],
                     padding="same",
                     activation=tf.nn.relu)
-            print conv1.get_shape().as_list()
+
             pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
-            print pool1.get_shape().as_list()
+
             conv2 = tf.layers.conv2d(
                     inputs=pool1,
                     filters=64,
                     kernel_size=[3, 3],
                     padding="same",
                     activation=tf.nn.relu)
-            print conv2.get_shape().as_list()
+
             pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[4, 4], strides=4)
-            print pool2.get_shape().as_list()
+
             pool2_flat = tf.reshape(pool2, tf.stack([-1, 8 * 8 * 64]))
 
             dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
