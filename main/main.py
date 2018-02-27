@@ -25,11 +25,16 @@ print "Successfully import models & utils"
 def run_loop(env, agent, max_episodes = 300, max_steps = 20000):
     start_time = time.time()
     step = 0
+    saver = tf.train.Saver()
     try:
         with tf.Session() as sess:
+            # saver.restore(sess, "my_net/save_net.ckpt")
             sess.run(tf.global_variables_initializer())
 
             for episode in xrange(max_episodes):
+                save_path = saver.save(sess, "my_net/save_net.ckpt")
+                print("Save to path: ", save_path)
+
                 observation = env.reset().reshape([-1])
 
                 while True:
@@ -47,6 +52,8 @@ def run_loop(env, agent, max_episodes = 300, max_steps = 20000):
                     step += 1
                     print "Step: "+str(step)
             print('game over')
+            save_path = saver.save(sess, "my_net/save_net.ckpt")
+            print("Save to path: ", save_path)
     except KeyboardInterrupt:
         pass
     finally:
