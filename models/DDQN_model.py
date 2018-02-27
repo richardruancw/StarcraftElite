@@ -70,7 +70,7 @@ class DDQN:
             pool2_flat = tf.reshape(pool2, [-1, 8 * 8 * 64])
 
             dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
-            dropout = tf.layers.dropout(inputs=dense, rate=0.5, training=mode == tf.estimator.ModeKeys.TRAIN)
+            dropout = tf.layers.dropout(inputs=dense, rate=0.4)
             self.q_eval = tf.layers.dense(inputs=dropout, units=self.n_actions)
 
         # ------------------ build target_net ------------------
@@ -93,7 +93,7 @@ class DDQN:
             t_pool2_flat = tf.reshape(t_pool2, [-1, 8 * 8 * 64])
 
             t_dense = tf.layers.dense(inputs=t_pool2_flat, units=1024, activation=tf.nn.relu)
-            t_dropout = tf.layers.dropout(inputs=t_dense, rate=0.5, training=mode == tf.estimator.ModeKeys.TRAIN)
+            t_dropout = tf.layers.dropout(inputs=t_dense, rate=0.4)
             self.q_next = tf.layers.dense(inputs=t_dropout, units=self.n_actions)
 
         with tf.variable_scope('q_target'):
