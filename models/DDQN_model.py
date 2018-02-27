@@ -47,21 +47,53 @@ class DDQN:
         self.s_ = tf.placeholder(tf.float32, [None, self.n_features], name='s_')  # input Next State
         self.a = tf.placeholder(tf.int32, [None, ], name='a')  # input Action
 
-        w_initializer, b_initializer = tf.random_normal_initializer(0., 0.3), tf.constant_initializer(0.1)
-
         # ------------------ build evaluate_net ------------------
+        _input = tf.reshape(self.s, [None, 17, 64, 64])
+
         with tf.variable_scope('eval_net'):
-            e1 = tf.layers.dense(self.s, 200, tf.nn.relu, kernel_initializer=w_initializer,
-                                 bias_initializer=b_initializer, name='e1')
-            self.q_eval = tf.layers.dense(e1, self.n_actions, kernel_initializer=w_initializer,
-                                          bias_initializer=b_initializer, name='q')
+            conv1 = tf.layers.conv2d(
+                    inputs=_input,
+                    filters=32,
+                    kernel_size=[3, 3],
+                    padding="same",
+                    activation=tf.nn.relu)
+            pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
+            conv2 = tf.layers.conv2d(
+                    inputs=pool1,
+                    filters=64,
+                    kernel_size=[3, 3],
+                    padding="same",
+                    activation=tf.nn.relu)
+            pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[4, 4], strides=4)
+
+            pool2_flat = tf.reshape(pool2, [-1, 8 * 8 * 64])
+
+            dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
+            dropout = tf.layers.dropout(inputs=dense, rate=0.5, training=mode == tf.estimator.ModeKeys.TRAIN)
+            self.q_eval = tf.layers.dense(inputs=dropout, units=self.n_actions)
 
         # ------------------ build target_net ------------------
         with tf.variable_scope('target_net'):
-            t1 = tf.layers.dense(self.s_, 200, tf.nn.relu, kernel_initializer=w_initializer,
-                                 bias_initializer=b_initializer, name='t1')
-            self.q_next = tf.layers.dense(t1, self.n_actions, kernel_initializer=w_initializer,
-                                          bias_initializer=b_initializer, name='t2')
+            t_conv1 = tf.layers.conv2d(
+                    inputs=_input,
+                    filters=32,
+                    kernel_size=[3, 3],
+                    padding="same",
+                    activation=tf.nn.relu)
+            t_pool1 = tf.layers.max_pooling2d(inputs=t_conv1, pool_size=[2, 2], strides=2)
+            t_conv2 = tf.layers.conv2d(
+                    inputs=t_pool1,
+                    filters=64,
+                    kernel_size=[3, 3],
+                    padding="same",
+                    activation=tf.nn.relu)
+            t_pool2 = tf.layers.max_pooling2d(inputs=t_conv2, pool_size=[4, 4], strides=4)
+
+            t_pool2_flat = tf.reshape(t_pool2, [-1, 8 * 8 * 64])
+
+            t_dense = tf.layers.dense(inputs=t_pool2_flat, units=1024, activation=tf.nn.relu)
+            t_dropout = tf.layers.dropout(inputs=t_dense, rate=0.5, training=mode == tf.estimator.ModeKeys.TRAIN)
+            self.q_next = tf.layers.dense(inputs=t_dropout, units=self.n_actions)
 
         with tf.variable_scope('q_target'):
             self.q_target = tf.placeholder(tf.float32, [None, self.n_actions], name='q_t')

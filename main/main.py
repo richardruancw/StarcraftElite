@@ -31,7 +31,7 @@ def run_loop(env, agent, max_episodes = 300, max_steps = 20000):
 
             for episode in xrange(max_episodes):
                 observation = env.reset().reshape([-1])
-                
+
                 while True:
                     if step>max_steps:
                         break
