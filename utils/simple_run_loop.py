@@ -18,7 +18,7 @@ def simple_run_loop(simple_env, simple_agent, max_frames=0):
                 if simple_env.last:
                     break
                 feedback = simple_env.step(actions)
-                features = feedback.features
+                model_features = feedback.features
                 reward = feedback.reward
     except KeyboardInterrupt:
         pass
