@@ -48,6 +48,7 @@ class DDQN:
         self.a = tf.placeholder(tf.int32, [None, ], name='a')  # input Action
 
         # ------------------ build evaluate_net ------------------
+        print type(self.s)
         _input = tf.reshape(self.s, [None, 17, 64, 64])
 
         with tf.variable_scope('eval_net'):
