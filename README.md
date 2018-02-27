@@ -7,7 +7,7 @@ Bowen Yao, Chuanwei Ruan, Mingxiang Chen
 
 ## Dependency
 
-* Python3
+* Python2
 
 This project is for Python3 only.
 
