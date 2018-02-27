@@ -76,7 +76,7 @@ class SimpleScEnvDiscrete:
 
     def _select_func_factory(self, lower_left, upper_right):
         def f(env):
-            print("Choose from {} to {}".format(lower_left, upper_right))
+            # print("Choose from {} to {}".format(lower_left, upper_right))
             return env.step([actions.FunctionCall(_SELECT_RECT, [[_SELECT_NOT_ADD], lower_left, upper_right])])
         return f
 
