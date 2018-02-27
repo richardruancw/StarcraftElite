@@ -67,7 +67,7 @@ class DDQN:
                     activation=tf.nn.relu)
             pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[4, 4], strides=4)
 
-            pool2_flat = tf.reshape(pool2, [-1, 8 * 8 * 64])
+            pool2_flat = tf.reshape(pool2, tf.stack([-1, 8 * 8 * 64]))
 
             dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
             dropout = tf.layers.dropout(inputs=dense, rate=0.4)
@@ -90,7 +90,7 @@ class DDQN:
                     activation=tf.nn.relu)
             t_pool2 = tf.layers.max_pooling2d(inputs=t_conv2, pool_size=[4, 4], strides=4)
 
-            t_pool2_flat = tf.reshape(t_pool2, [-1, 8 * 8 * 64])
+            t_pool2_flat = tf.reshape(t_pool2, tf.stack([-1, 8 * 8 * 64]))
 
             t_dense = tf.layers.dense(inputs=t_pool2_flat, units=1024, activation=tf.nn.relu)
             t_dropout = tf.layers.dropout(inputs=t_dense, rate=0.4)
