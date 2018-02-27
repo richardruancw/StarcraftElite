@@ -26,23 +26,22 @@ _NOT_QUEUED = 0
 
 class SimpleScEnvDiscrete:
     def __init__(self, env, split_base=30):
+        # key environment variables
+        self.last = False
         self._env = env
-        self.wrapped_actions = []
-        self.split_base = split_base
+        self.no_op_action = None
+        self.num_actions = None
 
-        # maintain the timestep to get pysc2 env data from last step
+        self.select_actions_list = []
+        self.move_attack_actions_list = []
+
+        self.split_base = split_base
         self.last_timestep = None
+        # maintain the timestep to get pysc2 env data from last step
         self.reset()
 
         # initialize functions
         self._populate_actions_funcs()
-        self.num_actions = len(self.wrapped_actions)
-
-        self.select_actions_id_range = None
-        self.move_attack_id_range = None
-
-        # key environment variables
-        self.last = False
 
     def reset(self):
         self.last_timestep = self._env.reset()[0]
@@ -83,7 +82,7 @@ class SimpleScEnvDiscrete:
 
     def _populate_actions_funcs(self):
         # 0 -> no_op
-        self.wrapped_actions.append(lambda env: env.step([actions.FunctionCall(_NO_OP, [])]))
+        self.no_op_action = lambda env: env.step([actions.FunctionCall(_NO_OP, [])])
 
         # select split screen observation
         x_lim, y_lim = self.last_timestep.observation['screen'][_SELECTED].shape
@@ -96,22 +95,22 @@ class SimpleScEnvDiscrete:
 
                 f = self._select_func_factory(lower_left, upper_right)
 
-                self.wrapped_actions.append(f)
+                self.select_actions_list.append(f)
 
-        print("Populated select actions with id up to: {}".format(len(self.wrapped_actions) - 1))
-        self.select_actions_id_range = [1, len(self.wrapped_actions)]
         # move one step around the mean
         for op_tpye in [_MOVE_SCREEN, _ATTACK_SCREEN]:
-            for dir in [[1, 0], [0, 1], [-1, 0], [0, -1], [0, 0]]:
+            for dir in [[1, 0], [0, 1], [-1, 0], [0, -1]]:
 
                 dir[0] *= 5
                 dir[1] *= 5
 
                 f = self._operation_func_factory(op_tpye, dir)
-                self.wrapped_actions.append(f)
+                self.move_attack_actions_list.append(f)
 
-        self.move_attack_id_range = [self.select_actions_id_range[1], len(self.wrapped_actions)]
-        print("Populated move/attact actions")
+        print("Populated move/attack actions")
+
+        # update num_action
+        self.num_actions = 1 + len(self.select_actions_list) * len(self.move_attack_actions_list)
 
     def get_reward(self):
         return self.compute_reward(self.last_timestep)
@@ -129,9 +128,23 @@ class SimpleScEnvDiscrete:
         self.last = self.last_timestep.last()
 
     def step(self, act_idx):
-        self.last_timestep = self.wrapped_actions[act_idx](self._env)[0]
+        assert((act_idx >= 0) and (act_idx < self.num_actions))
+        if act_idx == 0:
+            self.last_timestep = self.no_op_action(self._env)[0]
+            self.update()
+        else:
+            # decompose action to two steps
+            idx = act_idx - 1
+            select_idx = int(idx / len(self.move_attack_actions_list))
+            move_attack_idx = idx % len(self.move_attack_actions_list)
 
-        self.update()
+            # take select action
+            self.last_timestep = self.select_actions_list[select_idx](self._env)[0]
+            self.update()
+            # take move/attack action
+            self.last_timestep = self.move_attack_actions_list[move_attack_idx](self._env)[0]
+            self.update()
+
         feedback = namedtuple('feedback', ['features', 'reward'])
         return feedback(self.get_features(), self.get_reward())
 
