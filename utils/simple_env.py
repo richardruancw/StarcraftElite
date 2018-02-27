@@ -65,7 +65,7 @@ class SimpleScEnvDiscrete:
             # print("Move to: {}".format(loc))
 
             # env.step() returns a timestep object
-            return env.step([actions.FunctionCall(_MOVE_SCREEN, [[_NOT_QUEUED], loc])])
+            return env.step([actions.FunctionCall(op_type, [[_NOT_QUEUED], loc])])
 
         return f
 
