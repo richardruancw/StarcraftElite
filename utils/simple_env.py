@@ -9,7 +9,7 @@ from pysc2.env import sc2_env
 from absl import flags
 import numpy as np
 
-from utils import simple_run_loop
+import simple_run_loop
 
 _PLAYER_RELATIVE = features.SCREEN_FEATURES.player_relative.index
 _SELECTED = features.SCREEN_FEATURES.selected.index

@@ -17,18 +17,57 @@ from pysc2.env import sc2_env
 
 from absl import flags
 import numpy as np
-
-import simple_run_loop
+import tensorflow as tf
+import time
 
 print "Successfully import models & utils"
 
+def run_loop(env, agent, max_episodes = 300, max_steps = 20000):
+    start_time = time.time()
+    step = 0
+    try:
+        with tf.Session() as sess:
+            sess.run(tf.global_variables_initializer())
+
+            for episode in xrange(max_episodes):
+                observation = env.reset().reshape([-1])
+                
+                while True:
+                    if step>max_steps:
+                        break
+                    action = agent.choose_action(sess, observation)
+                    observation_, reward = env.step(action)
+                    observation_ = observation_.reshape([-1])
+                    agent.store_transition(observation, action, reward, observation_)
+                    if (step > 200) and (step % 20 == 0):
+                        agent.learn(sess)
+                    observation = observation_
+                    if env.last:
+                        break
+                    step += 1
+                    print "Step: "+str(step)
+            print('game over')
+    except KeyboardInterrupt:
+        pass
+    finally:
+        elapsed_time = time.time() - start_time
+        print("Took %.3f seconds for %s steps: %.3f fps" % (
+            elapsed_time, step, step / elapsed_time))
+
 flags.FLAGS(sys.argv)
-    steps = 20000
-    step_mul = 1
-    with sc2_env.SC2Env(map_name="DefeatZerglingsAndBanelings",
-                        step_mul=1,
-                        visualize=True,
-                        game_steps_per_episode=steps * step_mul) as env:
-        simpleSC = SimpleScEnvDiscrete(env)
-        dumb_agent = DumbAgent(simpleSC.num_actions)
-        simple_run_loop.simple_run_loop(simpleSC, dumb_agent)
+steps = 20000
+step_mul = 1
+with sc2_env.SC2Env(map_name="DefeatZerglingsAndBanelings",
+                    step_mul=1,
+                    visualize=True,
+                    game_steps_per_episode=steps * step_mul) as env:
+    simpleSC = SimpleScEnvDiscrete(env)
+    DDQN_agent = DDQN(simpleSC.num_actions, 17*64*64,
+                      learning_rate=0.01,
+                      reward_decay=0.9,
+                      e_greedy=0.9,
+                      replace_target_iter=200,
+                      memory_size=2000,
+                      # output_graph=True
+                      )
+    run_loop(simpleSC, DDQN_agent, max_episodes = 300)
