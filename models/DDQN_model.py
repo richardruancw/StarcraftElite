@@ -52,6 +52,9 @@ class DDQN:
         _input = tf.reshape(self.s, tf.stack([-1, 17, 64, 64]))
         _input = tf.transpose(_input, perm=[0,2,3,1])
 
+        t_input = tf.reshape(self.s_, tf.stack([-1, 17, 64, 64]))
+        t_input = tf.transpose(t_input, perm=[0,2,3,1])
+
         with tf.variable_scope('eval_net'):
             conv1 = tf.layers.conv2d(
                     inputs=_input,
@@ -80,7 +83,7 @@ class DDQN:
         # ------------------ build target_net ------------------
         with tf.variable_scope('target_net'):
             t_conv1 = tf.layers.conv2d(
-                    inputs=_input,
+                    inputs=t_input,
                     filters=32,
                     kernel_size=[3, 3],
                     padding="same",
