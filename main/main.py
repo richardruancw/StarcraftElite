@@ -22,7 +22,7 @@ import time
 
 print "Successfully import models & utils"
 
-def run_loop(env, agent, max_episodes = 300, max_steps = 20000):
+def run_loop(env, agent, max_episodes = 30000, max_steps = 2000000):
     start_time = time.time()
     step = 0
     saver = tf.train.Saver()
@@ -50,7 +50,7 @@ def run_loop(env, agent, max_episodes = 300, max_steps = 20000):
                     if env.last:
                         break
                     step += 1
-                    print "Step: "+str(step)
+                    print "Episode: "+str(episode)+"  Step: "+str(step)
             print('game over')
             save_path = saver.save(sess, "my_net/save_net.ckpt")
             print("Save to path: ", save_path)
@@ -74,7 +74,7 @@ with sc2_env.SC2Env(map_name="DefeatZerglingsAndBanelings",
                       reward_decay=0.9,
                       e_greedy=0.9,
                       replace_target_iter=200,
-                      memory_size=2000,
+                      memory_size=20000,
                       # output_graph=True
                       )
     run_loop(simpleSC, DDQN_agent, max_episodes = 300)
