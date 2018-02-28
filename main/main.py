@@ -55,7 +55,6 @@ def run_loop(env, agent, max_episodes = 300, max_steps = 20000):
                         agent.learn(sess)
                     observation = observation_
                     if env.last:
-                        print "Episode should adds"
                         break
                     step += 1
                     # print "Episode: "+str(episode)+"  Step: "+str(step)
