@@ -132,22 +132,25 @@ class SimpleScEnvDiscrete:
         assert((act_idx >= 0) and (act_idx < self.num_actions))
         curr_reward = 0
         if act_idx == 0:
-            self.last_timestep = self.no_op_action(self._env)[0]
-            self.update()
+            if not self.last:
+                self.last_timestep = self.no_op_action(self._env)[0]
+                self.update()
         else:
             # decompose action to two steps
             idx = act_idx - 1
             select_idx = int(idx / len(self.move_attack_actions_list))
             move_attack_idx = idx % len(self.move_attack_actions_list)
 
-            # take select action
-            self.last_timestep = self.select_actions_list[select_idx](self._env)[0]
-            curr_reward += self.get_reward()
-            self.update()
-            # take move/attack action
-            self.last_timestep = self.move_attack_actions_list[move_attack_idx](self._env)[0]
-            curr_reward += self.get_reward()
-            self.update()
+            if not self.last:
+                # take select action
+                self.last_timestep = self.select_actions_list[select_idx](self._env)[0]
+                curr_reward += self.get_reward()
+                self.update()
+            if not self.last:
+                # take move/attack action
+                self.last_timestep = self.move_attack_actions_list[move_attack_idx](self._env)[0]
+                curr_reward += self.get_reward()
+                self.update()
             if self.last:
                 curr_reward = 0
 

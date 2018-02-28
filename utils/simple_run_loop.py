@@ -4,10 +4,12 @@ def simple_run_loop(simple_env, simple_agent, max_frames=0):
     """A run loop to have agents and an environment interact."""
     total_frames = 0
     start_time = time.time()
-
+    ep_count = 0
     try:
         while True:
             model_features = simple_env.reset()
+            ep_count += 1
+            print("episode: {}".format(ep_count))
             while True:
                 total_frames += 1
                 actions = simple_agent.step(model_features)
