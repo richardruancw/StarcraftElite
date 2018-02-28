@@ -84,7 +84,7 @@ with sc2_env.SC2Env(map_name="DefeatZerglingsAndBanelings",
                       e_greedy=0.8,
                       replace_target_iter=200,
                       memory_size=20000,
-                      e_greedy_increment = 0.001
+                      e_greedy_increment = 0.0001
                       # output_graph=True
                       )
     run_loop(simpleSC, DDQN_agent, max_episodes = 30000, max_steps = 20000000)
