@@ -29,12 +29,12 @@ def run_loop(env, agent, max_episodes = 300, max_steps = 20000):
     saver = tf.train.Saver()
     try:
         with tf.Session() as sess:
-            # saver.restore(sess, _path_net)
-            sess.run(tf.global_variables_initializer())
+            saver.restore(sess, _path_net)
+            # sess.run(tf.global_variables_initializer())
 
             for episode in xrange(max_episodes):
-                save_path = saver.save(sess, "my_net/save_net.ckpt")
-                print("Save to path: ", save_path)
+                # save_path = saver.save(sess, "my_net/save_net.ckpt")
+                # print("Save to path: ", save_path)
 
                 observation = env.reset().reshape([-1])
 
@@ -45,16 +45,16 @@ def run_loop(env, agent, max_episodes = 300, max_steps = 20000):
                     observation_, reward = env.step(action)
                     observation_ = observation_.reshape([-1])
                     agent.store_transition(observation, action, reward, observation_)
-                    if (step > 200) and (step % 20 == 0):
-                        agent.learn(sess)
+                    # if (step > 200) and (step % 20 == 0):
+                    #     agent.learn(sess)
                     observation = observation_
                     if env.last:
                         break
                     step += 1
                     print "Episode: "+str(episode)+"  Step: "+str(step)
             print('game over')
-            save_path = saver.save(sess, "my_net/save_net.ckpt")
-            print("Save to path: ", save_path)
+            # save_path = saver.save(sess, "my_net/save_net.ckpt")
+            # print("Save to path: ", save_path)
     except KeyboardInterrupt:
         pass
     finally:
@@ -73,10 +73,9 @@ with sc2_env.SC2Env(map_name="DefeatZerglingsAndBanelings",
     DDQN_agent = DDQN(simpleSC.num_actions, 17*64*64,
                       learning_rate=0.01,
                       reward_decay=0.9,
-                      e_greedy=0.8,
+                      e_greedy=1.0,
                       replace_target_iter=200,
                       memory_size=20000,
-                      e_greedy_increment = 0.001
                       # output_graph=True
                       )
     run_loop(simpleSC, DDQN_agent, max_episodes = 30000, max_steps = 20000000)
