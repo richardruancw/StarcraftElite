@@ -50,15 +50,15 @@ def run_loop(env, agent, max_episodes = 300, max_steps = 20000):
                     total_reward+=reward
                     observation_ = observation_.reshape([-1])
                     agent.store_transition(observation, action, reward, observation_)
-                    if (step > 200) and (step % 20 == 0):
+                    if (step > 1000) and (step % 50 == 0):
+                        print "Episode: "+str(episode)+"  Step: "+str(step)+"  Reward: "+str(total_reward)
                         agent.learn(sess)
                     observation = observation_
                     if env.last:
                         break
                     step += 1
-                    print "Episode: "+str(episode)+"  Step: "+str(step)
-                print "Episode: "+str(episode)+"  Reward: "+str(total_reward)
-                with open(_path_log, 'a+') as f:
+                    # print "Episode: "+str(episode)+"  Step: "+str(step)
+                with open("log.txt", 'a+') as f:
                     f.write("Episode: "+str(episode)+"  Reward: "+str(total_reward)+"\n")
             print('game over')
             save_path = saver.save(sess, _path_net)
