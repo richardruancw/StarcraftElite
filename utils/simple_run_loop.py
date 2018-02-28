@@ -10,7 +10,6 @@ def simple_run_loop(simple_env, simple_agent, max_frames=0):
             model_features = simple_env.reset()
             while True:
                 total_frames += 1
-                # print(model_features)
                 actions = simple_agent.step(model_features)
 
                 if max_frames and total_frames >= max_frames:
@@ -18,9 +17,9 @@ def simple_run_loop(simple_env, simple_agent, max_frames=0):
                 if simple_env.last:
                     break
                 feedback = simple_env.step(actions)
-                print(model_features.shape)
                 model_features = feedback.features
                 reward = feedback.reward
+
     except KeyboardInterrupt:
         pass
     finally:

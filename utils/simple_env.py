@@ -31,6 +31,7 @@ class SimpleScEnvDiscrete:
         self._env = env
         self.no_op_action = None
         self.num_actions = None
+        self.cum_score = 0
 
         self.select_actions_list = []
         self.move_attack_actions_list = []
@@ -76,7 +77,6 @@ class SimpleScEnvDiscrete:
 
     def _select_func_factory(self, lower_left, upper_right):
         def f(env):
-            # print("Choose from {} to {}".format(lower_left, upper_right))
             return env.step([actions.FunctionCall(_SELECT_RECT, [[_SELECT_NOT_ADD], lower_left, upper_right])])
         return f
 
@@ -119,16 +119,18 @@ class SimpleScEnvDiscrete:
         return self.extract_features(self.last_timestep)
 
     def compute_reward(self, timestep):
-        return timestep.reward
+        return timestep.observation['score_cumulative'][0] - self.cum_score
 
     def extract_features(self, timestep):
         return timestep.observation['screen']
 
     def update(self):
         self.last = self.last_timestep.last()
+        self.cum_score = self.last_timestep.observation['score_cumulative'][0]
 
     def step(self, act_idx):
         assert((act_idx >= 0) and (act_idx < self.num_actions))
+        curr_reward = 0
         if act_idx == 0:
             self.last_timestep = self.no_op_action(self._env)[0]
             self.update()
@@ -140,13 +142,17 @@ class SimpleScEnvDiscrete:
 
             # take select action
             self.last_timestep = self.select_actions_list[select_idx](self._env)[0]
+            curr_reward += self.get_reward()
             self.update()
             # take move/attack action
             self.last_timestep = self.move_attack_actions_list[move_attack_idx](self._env)[0]
+            curr_reward += self.get_reward()
             self.update()
+            if self.last:
+                curr_reward = 0
 
         feedback = namedtuple('feedback', ['features', 'reward'])
-        return feedback(self.get_features(), self.get_reward())
+        return feedback(self.get_features(), curr_reward)
 
 
 class DumbAgent:
