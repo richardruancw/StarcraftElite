@@ -91,7 +91,7 @@ class SimpleScEnvDiscrete:
         for i in range(0, x_lim - 1, base_add):
             for j in range(0, y_lim - 1, base_add):
                 lower_left = [i, j]
-                upper_right = i + (base_add -1), j + (base_add -1)
+                upper_right = [i + (base_add -1), j + (base_add -1)]
 
                 f = self._select_func_factory(lower_left, upper_right)
 
@@ -134,6 +134,7 @@ class SimpleScEnvDiscrete:
         if act_idx == 0:
             if not self.last:
                 self.last_timestep = self.no_op_action(self._env)[0]
+                curr_reward += self.get_reward()
                 self.update()
         else:
             # decompose action to two steps
