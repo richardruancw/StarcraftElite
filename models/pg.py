@@ -11,11 +11,11 @@ from general import get_logger, Progbar, export_plot
 
 
 def build_mlp(mlp_input, output_size, scope):
-	with tf.variable_scope(scope) as scope:
+	with tf.variable_scope(scope):
 		out = mlp_input
-		out = tf.contrib.layers.conv2d(inputs=out, num_outputs=32, kernel_size=8, stride=4, data_format="NCHW")
-		out = tf.contrib.layers.conv2d(inputs=out, num_outputs=64, kernel_size=4, stride=2, data_format="NCHW")
-		out = tf.contrib.layers.conv2d(inputs=out, num_outputs=64, kernel_size=3, stride=1, data_format="NCHW")
+		out = tf.contrib.layers.conv2d(inputs=out, num_outputs=32, kernel_size=8, stride=4)
+		out = tf.contrib.layers.conv2d(inputs=out, num_outputs=64, kernel_size=4, stride=2)
+		out = tf.contrib.layers.conv2d(inputs=out, num_outputs=64, kernel_size=3, stride=1)
 		out = tf.contrib.layers.fully_connected(tf.contrib.layers.flatten(out, scope=scope), 512, activation_fn=tf.nn.relu)
 		out = tf.contrib.layers.fully_connected(out, output_size, activation_fn=None)
 	return out
@@ -34,8 +34,10 @@ class PG(object):
 			self.logger = get_logger(config.log_path)
 
 		self.env = env
-		self.observation_dim = self.config.observation_dim
-		self.action_dim = self.config.action_dim
+		temp = self.env.observation_dim
+		self.observation_dim = [temp[1], temp[2], temp[0]]
+		self.move_action_dim = self.env.action_dim - 1
+		self.attack_action_dim = self.env.action_dim - 1
 
 		self.lr = self.config.learning_rate
 
@@ -45,17 +47,32 @@ class PG(object):
   
 	def add_placeholders_op(self):
 		self.observation_placeholder = tf.placeholder(tf.float32, [None] + self.observation_dim)
-		self.action_placeholder = tf.squeeze(tf.placeholder(tf.float32, [None, self.action_dim]))
+		self.action_placeholder = tf.squeeze(tf.placeholder(tf.float32, [None, self.move_action_dim]))
+		self.attack_flag_placeholder = tf.placeholder(tf.float32, [None])
 		self.advantage_placeholder = tf.placeholder(tf.float32, [None])
   
   
 	def build_policy_network_op(self, scope = "policy_network"):
-		action_means = build_mlp(self.observation_placeholder, self.action_dim, scope)
-		log_std = tf.get_variable(name="log_std", shape=[self.action_dim], dtype=tf.float32)
-		self.sampled_action =  tf.squeeze(action_means, axis=0)+ \
-		   tf.random_normal([self.action_dim])*tf.exp(log_std)
-		mvn = tf.contrib.distributions.MultivariateNormalDiag(loc=action_means, scale_diag=tf.exp(log_std))
-		self.logprob = tf.log(tf.maximum(mvn.prob(self.action_placeholder), 1e-6))
+		move_action_means = build_mlp(self.observation_placeholder, self.move_action_dim, "move_network")
+		move_log_std = tf.get_variable(name="move_log_std", shape=[self.move_action_dim], dtype=tf.float32)
+		attack_action_means = build_mlp(self.observation_placeholder, self.attack_action_dim, "attack_network")
+		attack_log_std = tf.get_variable(name="attack_log_std", shape=[self.attack_action_dim], dtype=tf.float32)
+		self.sampled_move_action =  tf.squeeze(move_action_means, axis=0)+ \
+		   tf.random_normal([self.move_action_dim])*tf.exp(move_log_std)
+		self.sampled_attack_action =  tf.squeeze(attack_action_means, axis=0)+ \
+		   tf.random_normal([self.attack_action_dim])*tf.exp(attack_log_std)
+		attack_logit = build_mlp(self.observation_placeholder, 1, "logit_network")
+		self.attack_prob = 1.0 / (1.0 + tf.exp(attack_logit))
+
+		move_mvn = tf.contrib.distributions.MultivariateNormalDiag(
+			loc=move_action_means, scale_diag=tf.exp(move_log_std))
+		attack_mvn = tf.contrib.distributions.MultivariateNormalDiag(
+			loc=attack_action_means,
+			scale_diag=tf.exp(attack_log_std))
+		self.move_log_prob = tf.log(tf.maximum(move_mvn.prob(self.action_placeholder) * (1-self.attack_prob), 1e-6))
+		self.attack_log_prob = tf.log(tf.maximum(move_mvn.prob(self.action_placeholder) * self.attack_prob, 1e-6))
+		self.logprob = (1-self.attack_flag_placeholder) * self.move_log_prob + \
+					   self.attack_flag_placeholder * self.attack_log_prob
 
 	def add_loss_op(self):
 		self.loss = -tf.reduce_mean(self.logprob*self.advantage_placeholder)
@@ -151,23 +168,28 @@ class PG(object):
 			episodes = self.config.batch_size
   
 		while (episode < episodes):
-			state = env.reset()
-			states, actions, rewards = [], [], []
+			state = env.reset().transpose([1, 2, 0])
+			states, actions, rewards, flags = [], [], [], []
 			episode_reward = 0
   
 			for step in range(self.config.max_ep_len):
 				states.append(state)
-				action = self.sess.run([self.sampled_action], feed_dict={self.observation_placeholder: state})[0]
-				state, reward, done, action = env.step(action)
+				move_action, attack_action, attack_prob = self.sess.run(
+					[self.sampled_move_action, self.sampled_attack_action, self.attack_prob],
+					feed_dict={self.observation_placeholder: np.expand_dims(state, axis=0)})[0]
+				state, reward, action, flag = env.step(move_action, attack_action, attack_prob)
+				state = state.transpose([1, 2, 0])
 				actions.append(action)
 				rewards.append(reward)
+				flags.append(flag)
 				episode_reward += reward
-				if done:
+				if env.last:
 					break
 			episode_rewards.append(episode_reward)
 			path = {"observation": np.array(states),
-						  "reward": np.array(rewards),
-						  "action": np.array(actions)}
+						"reward": np.array(rewards),
+						"action": np.array(actions),
+						"flags": np.array(flags)}
 			paths.append(path)
 			episode += 1
 
@@ -193,7 +215,8 @@ class PG(object):
 	def calculate_advantage(self, returns, observations):
 		adv = returns
 		if self.config.use_baseline:
-			baseline_val = self.sess.run([self.baseline], feed_dict={self.observation_placeholder: observations})[0]
+			baseline_val = self.sess.run(
+				[self.baseline], feed_dict={self.observation_placeholder: observations})[0]
 			adv = returns - baseline_val
 		if self.config.normalize_advantage:
 			adv -= np.mean(adv)
@@ -221,6 +244,7 @@ class PG(object):
 			observations = np.concatenate([path["observation"] for path in paths])
 			actions = np.concatenate([path["action"] for path in paths])
 			rewards = np.concatenate([path["reward"] for path in paths])
+			flags = np.concatenate([path["flags"] for path in paths])
 			# compute Q-val estimates (discounted future returns) for each time step
 			returns = self.get_returns(paths)
 			advantages = self.calculate_advantage(returns, observations)
@@ -231,6 +255,7 @@ class PG(object):
 			self.sess.run(self.train_op, feed_dict={
 						self.observation_placeholder: observations,
 						self.action_placeholder: actions,
+						self.attack_flag_placeholder: flags,
 						self.advantage_placeholder: advantages})
   
 			# tf stuff
@@ -268,7 +293,7 @@ class PG(object):
 		# initialize
 		self.initialize()
 		# record one game at the beginning
-		if self.config.record:
+		if self.config.evaluate:
 			self.evaluate()
 		# model
 		self.train()

@@ -4,10 +4,8 @@ class config():
   
 
     # env specific
-    action_dim = 7
-    observation_dim = [64, 64, 4]
 
-    evaluate = True
+    evaluate = False
 
     # output config
     output_path = "../results/policy_gradient/"
