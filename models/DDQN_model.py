@@ -65,7 +65,7 @@ class DDQN:
 
         # ------------------ build target_net ------------------
         with tf.variable_scope('target_net'):
-            t_l1 = tf.contrib.layers.conv2d(inputs=_input, num_outputs=32, kernel_size=8, stride=4, padding="SAME")
+            t_l1 = tf.contrib.layers.conv2d(inputs=t_input, num_outputs=32, kernel_size=8, stride=4, padding="SAME")
             t_l2 = tf.contrib.layers.conv2d(inputs=t_l1, num_outputs=64, kernel_size=4, stride=2, padding="SAME")
             t_l3 = tf.contrib.layers.conv2d(inputs=t_l2, num_outputs=64, kernel_size=3, stride=1, padding="SAME")
             t_l3_flat = tf.contrib.layers.flatten(t_l3)
