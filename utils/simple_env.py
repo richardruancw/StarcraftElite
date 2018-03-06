@@ -125,9 +125,10 @@ class SimpleScEnvCountinous(SimpleScEnv):
                 curr_reward += self.get_reward()
                 self.update()
         else:
-            self.last_timestep = self.no_op_action(self._env)[0]
-            curr_reward += self.get_reward()
-            self.update()
+            if not self.last:
+                self.last_timestep = self.no_op_action(self._env)[0]
+                curr_reward += self.get_reward()
+                self.update()
 
         taken_actions = np.hstack([from_pos, end_pos, target_pos, attack_prob])
 
@@ -229,10 +230,6 @@ class SimpleScEnvDiscrete(SimpleScEnv):
                     self.last_timestep = self.move_attack_actions_list[move_attack_idx](self._env)[0]
                     curr_reward += self.get_reward()
                     self.update()
-            else:
-                self.last_timestep = self.no_op_action(self._env)[0]
-                curr_reward += self.get_reward()
-                self.update()
 
         feedback = namedtuple('feedback', ['features', 'reward'])
         return feedback(self.get_features(), curr_reward)
