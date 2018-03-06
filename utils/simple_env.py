@@ -143,7 +143,6 @@ class SimpleScEnvDiscrete(SimpleScEnv):
 
         # discrete specific data
         self.split_base = split_base
-        self.no_op_action = None
         self.num_actions = None
         self.select_actions_list = []
         self.move_attack_actions_list = []
