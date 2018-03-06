@@ -10,7 +10,7 @@ class config():
     evaluate = True
 
     # output config
-    output_path = "../results/" + env_name + "/"
+    output_path = "../results/policy_gradient/"
     model_output = output_path + "model.weights/"
     log_path = output_path + "log.txt"
     plot_output = output_path + "Policy_gradient.png"

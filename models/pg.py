@@ -13,9 +13,9 @@ from general import get_logger, Progbar, export_plot
 def build_mlp(mlp_input, output_size, scope):
 	with tf.variable_scope(scope) as scope:
 		out = mlp_input
-		out = tf.contrib.layers.conv2d(inputs=out, num_outputs=32, kernel_size=8, stride=4)
-		out = tf.contrib.layers.conv2d(inputs=out, num_outputs=64, kernel_size=4, stride=2)
-		out = tf.contrib.layers.conv2d(inputs=out, num_outputs=64, kernel_size=3, stride=1)
+		out = tf.contrib.layers.conv2d(inputs=out, num_outputs=32, kernel_size=8, stride=4, data_format="NCHW")
+		out = tf.contrib.layers.conv2d(inputs=out, num_outputs=64, kernel_size=4, stride=2, data_format="NCHW")
+		out = tf.contrib.layers.conv2d(inputs=out, num_outputs=64, kernel_size=3, stride=1, data_format="NCHW")
 		out = tf.contrib.layers.fully_connected(tf.contrib.layers.flatten(out, scope=scope), 512, activation_fn=tf.nn.relu)
 		out = tf.contrib.layers.fully_connected(out, output_size, activation_fn=None)
 	return out
