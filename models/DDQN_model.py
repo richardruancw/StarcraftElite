@@ -49,59 +49,28 @@ class DDQN:
 
         # ------------------ build evaluate_net ------------------
         # print type(self.s)
-        _input = tf.reshape(self.s, tf.stack([-1, 17, 64, 64]))
+        _input = tf.reshape(self.s, tf.stack([-1, 5, 64, 64]))
         _input = tf.transpose(_input, perm=[0,2,3,1])
 
-        t_input = tf.reshape(self.s_, tf.stack([-1, 17, 64, 64]))
+        t_input = tf.reshape(self.s_, tf.stack([-1, 5, 64, 64]))
         t_input = tf.transpose(t_input, perm=[0,2,3,1])
 
         with tf.variable_scope('eval_net'):
-            conv1 = tf.layers.conv2d(
-                    inputs=_input,
-                    filters=32,
-                    kernel_size=[3, 3],
-                    padding="same",
-                    activation=tf.nn.relu)
-
-            pool1 = tf.layers.max_pooling2d(inputs=conv1, pool_size=[2, 2], strides=2)
-
-            conv2 = tf.layers.conv2d(
-                    inputs=pool1,
-                    filters=64,
-                    kernel_size=[3, 3],
-                    padding="same",
-                    activation=tf.nn.relu)
-
-            pool2 = tf.layers.max_pooling2d(inputs=conv2, pool_size=[4, 4], strides=4)
-
-            pool2_flat = tf.reshape(pool2, tf.stack([-1, 8 * 8 * 64]))
-
-            dense = tf.layers.dense(inputs=pool2_flat, units=1024, activation=tf.nn.relu)
-            dropout = tf.layers.dropout(inputs=dense, rate=0.4)
-            self.q_eval = tf.layers.dense(inputs=dropout, units=self.n_actions)
+            e_l1 = tf.layers.conv2d(inputs=_input, num_outputs=32, kernel_size=8, stride=4, padding="SAME")
+            e_l2 = tf.layers.conv2d(inputs=e_l1, num_outputs=64, kernel_size=4, stride=2, padding="SAME")
+            e_l3 = tf.layers.conv2d(inputs=e_l2, num_outputs=64, kernel_size=3, stride=1, padding="SAME")
+            e_l3_flat = tf.layers.flatten(e_l3)
+            e_l4 = tf.layers.fully_connected(inputs=e_l3_flat, num_outputs=512)
+            self.q_eval = tf.layers.fully_connected(inputs=e_l4, num_outputs=num_actions, activation_fn=None)
 
         # ------------------ build target_net ------------------
         with tf.variable_scope('target_net'):
-            t_conv1 = tf.layers.conv2d(
-                    inputs=t_input,
-                    filters=32,
-                    kernel_size=[3, 3],
-                    padding="same",
-                    activation=tf.nn.relu)
-            t_pool1 = tf.layers.max_pooling2d(inputs=t_conv1, pool_size=[2, 2], strides=2)
-            t_conv2 = tf.layers.conv2d(
-                    inputs=t_pool1,
-                    filters=64,
-                    kernel_size=[3, 3],
-                    padding="same",
-                    activation=tf.nn.relu)
-            t_pool2 = tf.layers.max_pooling2d(inputs=t_conv2, pool_size=[4, 4], strides=4)
-
-            t_pool2_flat = tf.reshape(t_pool2, tf.stack([-1, 8 * 8 * 64]))
-
-            t_dense = tf.layers.dense(inputs=t_pool2_flat, units=1024, activation=tf.nn.relu)
-            t_dropout = tf.layers.dropout(inputs=t_dense, rate=0.4)
-            self.q_next = tf.layers.dense(inputs=t_dropout, units=self.n_actions)
+            t_l1 = tf.layers.conv2d(inputs=_input, num_outputs=32, kernel_size=8, stride=4, padding="SAME")
+            t_l2 = tf.layers.conv2d(inputs=t_l1, num_outputs=64, kernel_size=4, stride=2, padding="SAME")
+            t_l3 = tf.layers.conv2d(inputs=t_l2, num_outputs=64, kernel_size=3, stride=1, padding="SAME")
+            t_l3_flat = tf.layers.flatten(t_l3)
+            t_l4 = tf.layers.fully_connected(inputs=t_l3_flat, num_outputs=512)
+            self.q_next = tf.layers.fully_connected(inputs=t_l4, num_outputs=num_actions, activation_fn=None)
 
         with tf.variable_scope('q_target'):
             self.q_target = tf.placeholder(tf.float32, [None, self.n_actions], name='q_t')
