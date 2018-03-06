@@ -56,21 +56,21 @@ class DDQN:
         t_input = tf.transpose(t_input, perm=[0,2,3,1])
 
         with tf.variable_scope('eval_net'):
-            e_l1 = tf.layers.conv2d(inputs=_input, num_outputs=32, kernel_size=8, stride=4, padding="SAME")
-            e_l2 = tf.layers.conv2d(inputs=e_l1, num_outputs=64, kernel_size=4, stride=2, padding="SAME")
-            e_l3 = tf.layers.conv2d(inputs=e_l2, num_outputs=64, kernel_size=3, stride=1, padding="SAME")
-            e_l3_flat = tf.layers.flatten(e_l3)
-            e_l4 = tf.layers.fully_connected(inputs=e_l3_flat, num_outputs=512)
-            self.q_eval = tf.layers.fully_connected(inputs=e_l4, num_outputs=num_actions, activation_fn=None)
+            e_l1 = tf.contrib.layers.conv2d(inputs=_input, num_outputs=32, kernel_size=8, stride=4, padding="SAME")
+            e_l2 = tf.contrib.layers.conv2d(inputs=e_l1, num_outputs=64, kernel_size=4, stride=2, padding="SAME")
+            e_l3 = tf.contrib.layers.conv2d(inputs=e_l2, num_outputs=64, kernel_size=3, stride=1, padding="SAME")
+            e_l3_flat = tf.contrib.layers.flatten(e_l3)
+            e_l4 = tf.contrib.layers.fully_connected(inputs=e_l3_flat, num_outputs=512)
+            self.q_eval = tf.contrib.layers.fully_connected(inputs=e_l4, num_outputs=num_actions, activation_fn=None)
 
         # ------------------ build target_net ------------------
         with tf.variable_scope('target_net'):
-            t_l1 = tf.layers.conv2d(inputs=_input, num_outputs=32, kernel_size=8, stride=4, padding="SAME")
-            t_l2 = tf.layers.conv2d(inputs=t_l1, num_outputs=64, kernel_size=4, stride=2, padding="SAME")
-            t_l3 = tf.layers.conv2d(inputs=t_l2, num_outputs=64, kernel_size=3, stride=1, padding="SAME")
-            t_l3_flat = tf.layers.flatten(t_l3)
-            t_l4 = tf.layers.fully_connected(inputs=t_l3_flat, num_outputs=512)
-            self.q_next = tf.layers.fully_connected(inputs=t_l4, num_outputs=num_actions, activation_fn=None)
+            t_l1 = tf.contrib.layers.conv2d(inputs=_input, num_outputs=32, kernel_size=8, stride=4, padding="SAME")
+            t_l2 = tf.contrib.layers.conv2d(inputs=t_l1, num_outputs=64, kernel_size=4, stride=2, padding="SAME")
+            t_l3 = tf.contrib.layers.conv2d(inputs=t_l2, num_outputs=64, kernel_size=3, stride=1, padding="SAME")
+            t_l3_flat = tf.contrib.layers.flatten(t_l3)
+            t_l4 = tf.contrib.layers.fully_connected(inputs=t_l3_flat, num_outputs=512)
+            self.q_next = tf.contrib.layers.fully_connected(inputs=t_l4, num_outputs=num_actions, activation_fn=None)
 
         with tf.variable_scope('q_target'):
             self.q_target = tf.placeholder(tf.float32, [None, self.n_actions], name='q_t')
