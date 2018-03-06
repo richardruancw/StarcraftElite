@@ -41,7 +41,7 @@ _NOT_QUEUED = 0
 #
 MAX_UNIT_DENSITY_AA = 16
 MAP_SIZE = 64
-ACTION_DIM_COUNTINOUS = 7
+ACTION_DIM_COUNTINOUS = 13
 
 
 class SimpleScEnv(object):
@@ -97,18 +97,27 @@ class SimpleScEnvCountinous(SimpleScEnv):
         self.action_dim = ACTION_DIM_COUNTINOUS
         self.observation_dim = [len(SCREEN_FEATURES_IDX), MAP_SIZE, MAP_SIZE]
 
-
     def _position_fixer(self, x):
         return int(max(0, min(x, MAP_SIZE)))
 
-    def step(self, agent_action):
-        assert len(agent_action) == self.action_dim, "The input action has dimension {}, the required one is {}".format(len(agent_action), ACTION_DIM_COUNTINOUS)
+    def step(self, move_action, attack_action, attack_prob):
+        assert len(move_action) == len(attack_action), "The move and attack action should have the same dimension!"
+        assert len(move_action) + len(attack_action) + 1 == self.action_dim, "The total input dimension doesn't equal to {} !".format(self.action_dim)
+        assert (attack_prob >= 0) and (attack_prob <= 1), "The attack probability should be between 0 and 1!"
+
+        # with attack probability to attack
+        attack_flag = True if np.random.rand() < attack_prob else False
+        if attack_flag:
+            op_type = _ATTACK_SCREEN
+            agent_action = attack_action
+        else:
+            op_type = _MOVE_SCREEN
+            agent_action = move_action
+
         # check bounds for position
         from_pos = [self._position_fixer(x) for x in agent_action[:2]]
         end_pos = [self._position_fixer(x) for x in agent_action[2:4]]
         target_pos = [self._position_fixer(x) for x in agent_action[4:6]]
-        attack_prob = agent_action[6]
-        assert (attack_prob >= 0) and (attack_prob <= 1), "The attack probability should be between 0 and 1!"
 
         curr_reward = 0
         # select and move/attack if such actions are available
@@ -119,7 +128,6 @@ class SimpleScEnvCountinous(SimpleScEnv):
             self.update()
 
             # then with attack_prob to attack
-            op_type = _ATTACK_SCREEN if np.random.rand() < attack_prob else _MOVE_SCREEN
             if not self.last and op_type in self.last_timestep.observation["available_actions"]:
                 self.last_timestep = self._env.step([actions.FunctionCall(op_type, [[_NOT_QUEUED], target_pos])])[0]
                 curr_reward += self.get_reward()
@@ -130,10 +138,10 @@ class SimpleScEnvCountinous(SimpleScEnv):
                 curr_reward += self.get_reward()
                 self.update()
 
-        taken_actions = np.hstack([from_pos, end_pos, target_pos, attack_prob])
+        taken_actions = np.hstack([from_pos, end_pos, target_pos])
 
-        feedback = namedtuple('feedback', ['features', 'reward', 'taken_actions'])
-        return feedback(self.get_features(), curr_reward, taken_actions)
+        feedback = namedtuple('feedback', ['features', 'reward', 'taken_actions', 'attack_flag'])
+        return feedback(self.get_features(), curr_reward, taken_actions, attack_flag)
 
 
 class SimpleScEnvDiscrete(SimpleScEnv):
@@ -250,7 +258,7 @@ class DumbContAgent:
     def step(self, features):
         pos = MAP_SIZE * np.random.rand(6)
         attack_prob = np.random.rand()
-        return np.hstack([pos, attack_prob])
+        return pos, pos, attack_prob
 
 
 
@@ -276,7 +284,7 @@ def test_continous():
                         game_steps_per_episode=steps * step_mul) as env:
         simpleSC = SimpleScEnvCountinous(env)
         dumb_agent = DumbContAgent()
-        simple_run_loop.simple_run_loop(simpleSC, dumb_agent)
+        simple_run_loop.simple_run_loop_continous(simpleSC, dumb_agent)
 
 if __name__ == "__main__":
     # test_discrete()
