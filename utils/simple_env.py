@@ -106,7 +106,7 @@ class SimpleScEnvCountinous(SimpleScEnv):
         assert (attack_prob >= 0) and (attack_prob <= 1), "The attack probability should be between 0 and 1!"
 
         # with attack probability to attack
-        attack_flag = True if np.random.rand() < attack_prob else False
+        attack_flag = 1 if np.random.rand() < attack_prob else 0
         if attack_flag:
             op_type = _ATTACK_SCREEN
             agent_action = attack_action
