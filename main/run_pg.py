@@ -13,10 +13,10 @@ from absl import flags
 
 FLAGS = flags.FLAGS
 FLAGS(sys.argv)
-steps = 20000
-step_mul = 1
+steps = 2000
+step_mul = 20
 with sc2_env.SC2Env(map_name="DefeatZerglingsAndBanelings",
-                    step_mul=1,
+                    step_mul=step_mul,
                     visualize=False,
                     game_steps_per_episode=steps * step_mul) as original_env:
     env = SimpleScEnvCountinous(original_env)

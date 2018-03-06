@@ -36,8 +36,8 @@ class PG(object):
 		self.env = env
 		temp = self.env.observation_dim
 		self.observation_dim = [temp[1], temp[2], temp[0]]
-		self.move_action_dim = self.env.action_dim - 1
-		self.attack_action_dim = self.env.action_dim - 1
+		self.move_action_dim = (self.env.action_dim - 1) / 2
+		self.attack_action_dim = (self.env.action_dim - 1) / 2
 
 		self.lr = self.config.learning_rate
 
@@ -176,7 +176,7 @@ class PG(object):
 				states.append(state)
 				move_action, attack_action, attack_prob = self.sess.run(
 					[self.sampled_move_action, self.sampled_attack_action, self.attack_prob],
-					feed_dict={self.observation_placeholder: np.expand_dims(state, axis=0)})[0]
+					feed_dict={self.observation_placeholder: np.expand_dims(state, axis=0)})
 				state, reward, action, flag = env.step(move_action, attack_action, attack_prob)
 				state = state.transpose([1, 2, 0])
 				actions.append(action)
@@ -268,11 +268,6 @@ class PG(object):
 			sigma_reward = np.sqrt(np.var(total_rewards) / len(total_rewards))
 			msg = "Average reward: {:04.2f} +/- {:04.2f}".format(avg_reward, sigma_reward)
 			self.logger.info(msg)
-  
-			if self.config.record and (last_record > self.config.record_freq):
-				self.logger.info("Recording...")
-				last_record =0
-				self.record()
   
 			self.logger.info("- Training done.")
 			export_plot(scores_eval, "Score", self.config.plot_output)

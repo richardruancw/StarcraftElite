@@ -20,7 +20,7 @@ def export_plot(ys, ylabel, filename):
     plt.plot(range(len(ys)), ys)
     plt.xlabel("Training Episode")
     plt.ylabel(ylabel)
-    plt.title(title)
+    plt.title(filename)
     plt.savefig(filename)
     plt.close()
 
