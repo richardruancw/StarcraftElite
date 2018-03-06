@@ -76,7 +76,7 @@ class SimpleScEnv(object):
     def extract_features(self, timestep):
 
         curr_features = timestep.observation['screen'].copy()
-        curr_features.dtype = np.float32
+        curr_features = curr_features.astype(np.float32)
         # make the density between 0 and 1
         curr_features[_UNIT_DENSITY_AA, :, :] /= MAX_UNIT_DENSITY_AA
         # make the hits points ratio between 0 and 1
