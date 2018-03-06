@@ -98,7 +98,7 @@ class SimpleScEnvCountinous(SimpleScEnv):
         self.observation_dim = [len(SCREEN_FEATURES_IDX), MAP_SIZE, MAP_SIZE]
 
     def _position_fixer(self, x):
-        return int(max(0, min(x, MAP_SIZE)))
+        return int(max(0, min(x, MAP_SIZE - 1)))
 
     def step(self, move_action, attack_action, attack_prob):
         assert len(move_action) == len(attack_action), "The move and attack action should have the same dimension!"
