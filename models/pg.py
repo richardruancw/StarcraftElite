@@ -5,7 +5,8 @@ import tensorflow as tf
 _path = os.path.dirname(os.path.abspath(__file__))
 _path_utils = "/".join(_path.split('/')[:-1])+"/utils/"
 _path_models = "/".join(_path.split('/')[:-1])+"/models/"
-_path_net = "/".join(_path.split('/')[:-1])+"/policy_gradient.ckpt"
+_path_net_prefix = "/".join(_path.split('/')[:-1])+"/policy_gradient_net/"
+_path_net = "/".join(_path.split('/')[:-1])+"/policy_gradient_net/policy_gradient.ckpt"
 sys.path.insert(0, _path_utils)
 sys.path.insert(0, _path_models)
 from general import get_logger, Progbar, export_plot
@@ -44,8 +45,8 @@ class PG(object):
 
 		# build model
 		self.build()
-  
-  
+
+
 	def add_placeholders_op(self):
 		self.observation_placeholder = tf.placeholder(tf.float32, [None] + self.observation_dim)
 		self.action_placeholder = tf.squeeze(tf.placeholder(tf.float32, [None, self.move_action_dim]))
@@ -63,7 +64,7 @@ class PG(object):
 		self.sampled_attack_action =  tf.squeeze(attack_action_means, axis=0)+ \
 		   tf.random_normal([self.attack_action_dim])*tf.exp(attack_log_std)
 		attack_logit = build_mlp(self.observation_placeholder, 1, "logit_network")
-		self.attack_prob = 1.0 / (1.0 + tf.exp(attack_logit))
+		self.attack_prob = 1.0 / (1.0 + tf.exp(tf.maximum(attack_logit, 10)))
 
 		move_mvn = tf.contrib.distributions.MultivariateNormalDiag(
 			loc=move_action_means, scale_diag=tf.exp(move_log_std))
@@ -290,6 +291,8 @@ class PG(object):
 
 
 	def run(self):
+		if(not os.path.exists(_path_net_prefix)):
+			os.mkdir(_path_net_prefix)
 		# initialize
 		self.initialize()
 		# record one game at the beginning

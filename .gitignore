@@ -10,3 +10,15 @@
 *.pyc
 
 *.local
+
+policy_gradient_net/checkpoint
+
+*.data-00000-of-00001
+
+*.index
+
+*.meta
+
+*.txt
+
+*.png
