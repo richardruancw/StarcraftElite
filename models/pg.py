@@ -64,7 +64,7 @@ class PG(object):
 		self.sampled_attack_action =  tf.squeeze(attack_action_means, axis=0)+ \
 		   tf.random_normal([self.attack_action_dim])*tf.exp(attack_log_std)
 		attack_logit = build_mlp(self.observation_placeholder, 1, "logit_network")
-		self.attack_prob = 1.0 / (1.0 + tf.exp(tf.maximum(attack_logit, 10)))
+		self.attack_prob = 1.0 / (1.0 + tf.exp(tf.minimum(attack_logit, 10)))
 
 		move_mvn = tf.contrib.distributions.MultivariateNormalDiag(
 			loc=move_action_means, scale_diag=tf.exp(move_log_std))
