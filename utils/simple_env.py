@@ -100,13 +100,13 @@ class SimpleScEnvCountinous(SimpleScEnv):
     def _position_map(self, x):
         assert (x >= -1) and (x <= 1), "Input should between -1 and 1!"
 
-        x = x * (MAP_SIZE / 2) + MAP_SIZE / 2
+        x = x * (MAP_SIZE / 2.0) + MAP_SIZE / 2.0
         return int(max(0, min(x, MAP_SIZE - 1)))
 
     def step(self, move_action, attack_action, attack_prob):
         assert len(move_action) == len(attack_action), "The move and attack action should have the same dimension!"
         assert len(move_action) + len(attack_action) + 1 == self.action_dim, "The total input dimension doesn't equal to {} !".format(self.action_dim)
-        assert (attack_prob >= 0) and (attack_prob <= 1), "The attack probability should be between 0 and 1!"
+        assert (attack_prob >= 0) and (attack_prob <= 1), "The attack probability should be between 0 and 1! The input is {}".format(attack_prob)
 
         # with attack probability to attack
         attack_flag = 1 if np.random.rand() < attack_prob else 0
