@@ -13,7 +13,7 @@ from absl import flags
 
 FLAGS = flags.FLAGS
 FLAGS(sys.argv)
-steps = 2000
+steps = 200
 step_mul = 20
 with sc2_env.SC2Env(map_name="DefeatZerglingsAndBanelings",
                     step_mul=step_mul,

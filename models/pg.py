@@ -5,6 +5,7 @@ import tensorflow as tf
 _path = os.path.dirname(os.path.abspath(__file__))
 _path_utils = "/".join(_path.split('/')[:-1])+"/utils/"
 _path_models = "/".join(_path.split('/')[:-1])+"/models/"
+_path_net = "/".join(_path.split('/')[:-1])+"/policy_gradient.ckpt"
 sys.path.insert(0, _path_utils)
 sys.path.insert(0, _path_models)
 from general import get_logger, Progbar, export_plot
@@ -107,6 +108,7 @@ class PG(object):
 	def initialize(self):
 		# create tf session
 		self.sess = tf.Session()
+		self.saver = tf.train.Saver()
 		# tensorboard stuff
 		self.add_summary()
 		# initiliaze all variables
@@ -238,6 +240,9 @@ class PG(object):
 		scores_eval = [] # list of scores computed at iteration time
 
 		for t in range(self.config.num_batches):
+			save_path = self.saver.save(self.sess, _path_net)
+			print("Save to path: " + save_path)
+
 			# collect a minibatch of samples
 			paths, total_rewards = self.sample_path(self.env)
 			scores_eval = scores_eval + total_rewards
