@@ -97,7 +97,10 @@ class SimpleScEnvCountinous(SimpleScEnv):
         self.action_dim = ACTION_DIM_COUNTINOUS
         self.observation_dim = [len(SCREEN_FEATURES_IDX), MAP_SIZE, MAP_SIZE]
 
-    def _position_fixer(self, x):
+    def _position_map(self, x):
+        assert (x >= -1) and (x <= 1), "Input should between -1 and 1!"
+
+        x = x * (MAP_SIZE / 2) + MAP_SIZE / 2
         return int(max(0, min(x, MAP_SIZE - 1)))
 
     def step(self, move_action, attack_action, attack_prob):
@@ -114,10 +117,13 @@ class SimpleScEnvCountinous(SimpleScEnv):
             op_type = _MOVE_SCREEN
             agent_action = move_action
 
+        # the inputs are bounded between -1 and 1
+        agent_action = [min(max(x, -1), 1) for x in agent_action]
+
         # check bounds for position
-        from_pos = [self._position_fixer(x) for x in agent_action[:2]]
-        end_pos = [self._position_fixer(x) for x in agent_action[2:4]]
-        target_pos = [self._position_fixer(x) for x in agent_action[4:6]]
+        from_pos = [self._position_map(x) for x in agent_action[:2]]
+        end_pos = [self._position_map(x) for x in agent_action[2:4]]
+        target_pos = [self._position_map(x) for x in agent_action[4:6]]
 
         curr_reward = 0
         # select and move/attack if such actions are available
@@ -256,7 +262,7 @@ class DumbContAgent:
         pass
 
     def step(self, features):
-        pos = MAP_SIZE * np.random.rand(6)
+        pos = np.random.rand(6)*2 - 1
         attack_prob = np.random.rand()
         return pos, pos, attack_prob
 
