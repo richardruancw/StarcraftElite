@@ -71,8 +71,8 @@ def run_loop(env, agent, max_episodes = 300, max_steps = 20000):
             elapsed_time, step, step / elapsed_time))
 
 flags.FLAGS(sys.argv)
-steps = 20000
-step_mul = 1
+steps = 2000
+step_mul = 20
 with sc2_env.SC2Env(map_name="DefeatZerglingsAndBanelings",
                     step_mul=1,
                     visualize=True,
