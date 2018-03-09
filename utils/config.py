@@ -18,13 +18,14 @@ class config():
 
     
     # model and training config
+    mode = "TD" # value can be "TD" or "MC"
     num_batches = 100 # number of batches trained on
-    batch_size = 100 # number of steps used to compute each policy update, default is 1000
-    max_ep_len = 100 # maximum episode length
+    batch_size = 20 # number of steps used to compute each policy update, default is 1000
+    max_ep_len = 20 # maximum episode length
     learning_rate = 3e-2
-    gamma = 1 # the discount factor
+    gamma = 0.9 # the discount factor
     use_baseline = True 
-    normalize_advantage=True
+    normalize_advantage = True
 
     # since we start new episodes for each batch
     assert max_ep_len <= batch_size

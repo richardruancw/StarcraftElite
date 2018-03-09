@@ -199,7 +199,7 @@ class PG(object):
 		return paths, episode_rewards
   
   
-	def get_returns(self, paths):
+	def get_returns_MC(self, paths):
 		all_returns = []
 		for path in paths:
 			rewards = path["reward"]
@@ -215,7 +215,7 @@ class PG(object):
 		return returns
   
   
-	def calculate_advantage(self, returns, observations):
+	def calculate_advantage_MC(self, returns, observations):
 		adv = returns
 		if self.config.use_baseline:
 			baseline_val = self.sess.run(
@@ -225,8 +225,29 @@ class PG(object):
 			adv -= np.mean(adv)
 			adv /= np.std(adv)
 		return adv
-  
-  
+
+	def calculate_advantage_TD(self, paths):
+		all_advs = []
+		all_returns = []
+		for path in paths:
+			rewards = path["reward"]
+			observations = path["observation"]
+			baseline_val = self.sess.run(
+				[self.baseline], feed_dict={self.observation_placeholder: observations})[0]
+			returns = rewards[:-1] + self.config.gamma * baseline_val[1:]
+			adv = returns
+			if(self.config.use_baseline):
+				adv -= baseline_val[:-1]
+			all_advs.append(adv)
+			all_returns.append(returns)
+		adv = np.concatenate(all_advs)
+		returns = np.concatenate(all_returns)
+		if self.config.normalize_advantage:
+			adv -= np.mean(adv)
+			adv /= np.std(adv)
+		return adv, returns
+
+
 	def update_baseline(self, returns, observations):
 		self.sess.run([self.update_baseline_op], feed_dict={
 		  self.baseline_target_placeholder:returns,
@@ -247,13 +268,23 @@ class PG(object):
 			# collect a minibatch of samples
 			paths, total_rewards = self.sample_path(self.env)
 			scores_eval = scores_eval + total_rewards
-			observations = np.concatenate([path["observation"] for path in paths])
-			actions = np.concatenate([path["action"] for path in paths])
-			rewards = np.concatenate([path["reward"] for path in paths])
-			flags = np.concatenate([path["flags"] for path in paths])
-			# compute Q-val estimates (discounted future returns) for each time step
-			returns = self.get_returns(paths)
-			advantages = self.calculate_advantage(returns, observations)
+
+			# process the data based on mode
+			if (self.config.mode == "MC"):
+				observations = np.concatenate([path["observation"] for path in paths])
+				actions = np.concatenate([path["action"] for path in paths])
+				rewards = np.concatenate([path["reward"] for path in paths])
+				flags = np.concatenate([path["flags"] for path in paths])
+				# compute Q-val estimates (discounted future returns) for each time step
+				returns = self.get_returns_MC(paths)
+				advantages = self.calculate_advantage_MC(returns, observations)
+			elif(self.config.mode == "TD"):
+				observations = np.concatenate([path["observation"][:-1] for path in paths])
+				actions = np.concatenate([path["action"][:-1] for path in paths])
+				flags = np.concatenate([path["flags"][:-1] for path in paths])
+				advantages, returns = self.calculate_advantage_TD(paths)
+			else:
+				raise("invalid mode!!!! should be MC or TD")
 
 			# run training operations
 			if self.config.use_baseline:
