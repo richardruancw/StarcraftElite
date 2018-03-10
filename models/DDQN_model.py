@@ -49,10 +49,10 @@ class DDQN:
 
         # ------------------ build evaluate_net ------------------
         # print type(self.s)
-        _input = tf.reshape(self.s, tf.stack([-1, 5, 64, 64]))
+        _input = tf.reshape(self.s, tf.stack([-1, 17, 64, 64]))
         _input = tf.transpose(_input, perm=[0,2,3,1])
 
-        t_input = tf.reshape(self.s_, tf.stack([-1, 5, 64, 64]))
+        t_input = tf.reshape(self.s_, tf.stack([-1, 17, 64, 64]))
         t_input = tf.transpose(t_input, perm=[0,2,3,1])
 
         with tf.variable_scope('eval_net'):

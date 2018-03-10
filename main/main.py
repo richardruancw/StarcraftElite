@@ -77,12 +77,12 @@ with sc2_env.SC2Env(map_name="MoveToBeacon",
                     step_mul=1,
                     visualize=True,
                     game_steps_per_episode=steps * step_mul) as env:
-    simpleSC = SimpleScEnvDiscrete(env, split_base = 1)
+    simpleSC = SimpleScEnvDiscrete(env, split_base = 8)
 
     DDQN_agent = DDQN(simpleSC.num_actions, 17*64*64,
                       learning_rate=0.01,
                       reward_decay=1.0,
-                      e_greedy=0.8,
+                      e_greedy=0.9,
                       replace_target_iter=200,
                       memory_size=20000,
                       e_greedy_increment = 0.0001
