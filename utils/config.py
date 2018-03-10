@@ -32,3 +32,4 @@ class config():
 
     # since we start new episodes for each batch
     assert max_ep_len <= batch_size
+    assert rand_steps <= num_batches
