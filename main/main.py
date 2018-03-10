@@ -9,7 +9,7 @@ _path_log = "/".join(_path.split('/')[:-1])+"log.txt"
 sys.path.insert(0, _path_utils)
 sys.path.insert(0, _path_models)
 from DDQN_model import DDQN
-from simple_env2 import SimpleScEnvDiscrete
+from simple_env_2 import SimpleScEnvDiscrete
 
 from collections import namedtuple
 
