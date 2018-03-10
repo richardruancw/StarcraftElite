@@ -44,13 +44,25 @@ MAP_SIZE = 64
 ACTION_DIM_COUNTINOUS = 13
 
 
+def extract_features_default(timestep):
+    curr_features = timestep.observation['screen'].copy()
+    curr_features = curr_features.astype(np.float32)
+    # make the density between 0 and 1
+    curr_features[_UNIT_DENSITY_AA, :, :] /= MAX_UNIT_DENSITY_AA
+    # make the hits points ratio between 0 and 1
+    curr_features[_UNIT_HIT_POINTS_RATIO, :, :] /= 255
+    curr_features = curr_features[SCREEN_FEATURES_IDX, :, :]
+    return curr_features
+
+
 class SimpleScEnv(object):
-    def __init__(self, env):
+    def __init__(self, env, extract_features_func=extract_features_default):
         # key environment variables
         self.last = False
         self._env = env
         self.cum_score = 0
         self.last_timestep = None
+        self.extract_features_func = extract_features_func
         # maintain the timestep to get pysc2 env data from last step
         self.reset()
         self.no_op_action = lambda env: env.step([actions.FunctionCall(_NO_OP, [])])
@@ -68,23 +80,23 @@ class SimpleScEnv(object):
         return self.compute_reward(self.last_timestep)
 
     def get_features(self):
-        return self.extract_features(self.last_timestep)
+        return self.extract_features_func(self.last_timestep)
 
     def compute_reward(self, timestep):
         return timestep.observation['score_cumulative'][0] - self.cum_score
 
-    def extract_features(self, timestep):
-
-        curr_features = timestep.observation['screen'].copy()
-        curr_features = curr_features.astype(np.float32)
-        # make the density between 0 and 1
-        curr_features[_UNIT_DENSITY_AA, :, :] /= MAX_UNIT_DENSITY_AA
-        # make the hits points ratio between 0 and 1
-        curr_features[_UNIT_HIT_POINTS_RATIO, :, :] /= 255
-
-        curr_features = curr_features[SCREEN_FEATURES_IDX, :, :]
-
-        return curr_features
+    # def extract_features(self, timestep):
+    #
+    #     curr_features = timestep.observation['screen'].copy()
+    #     curr_features = curr_features.astype(np.float32)
+    #     # make the density between 0 and 1
+    #     curr_features[_UNIT_DENSITY_AA, :, :] /= MAX_UNIT_DENSITY_AA
+    #     # make the hits points ratio between 0 and 1
+    #     curr_features[_UNIT_HIT_POINTS_RATIO, :, :] /= 255
+    #
+    #     curr_features = curr_features[SCREEN_FEATURES_IDX, :, :]
+    #
+    #     return curr_features
 
     def step(self):
         raise NotImplementedError("Subclasses should implement the step function!")
