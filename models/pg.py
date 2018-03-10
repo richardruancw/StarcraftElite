@@ -10,6 +10,7 @@ _path_net = "/".join(_path.split('/')[:-1])+"/policy_gradient_net/policy_gradien
 sys.path.insert(0, _path_utils)
 sys.path.insert(0, _path_models)
 from general import get_logger, Progbar, export_plot
+from LinearSchedule import LinearSchedule
 
 
 def build_mlp(mlp_input, output_size, scope):
@@ -42,6 +43,9 @@ class PG(object):
 		self.attack_action_dim = (self.env.action_dim - 1) / 2
 
 		self.lr = self.config.learning_rate
+		self.scheduler = LinearSchedule(self.config.rand_begin, \
+										self.config.rand_end,\
+										self.config.rand_steps)
 
 		# build model
 		self.build()
@@ -265,6 +269,10 @@ class PG(object):
 			save_path = self.saver.save(self.sess, _path_net)
 			print("Save to path: " + save_path)
 
+			# update the random exploration prob
+			self.scheduler.update(t)
+			self.env.rand_explore_prob = self.scheduler.epsilon
+
 			# collect a minibatch of samples
 			paths, total_rewards = self.sample_path(self.env)
 			scores_eval = scores_eval + total_rewards
@@ -303,21 +311,24 @@ class PG(object):
 			# compute reward statistics for this batch and log
 			avg_reward = np.mean(total_rewards)
 			sigma_reward = np.sqrt(np.var(total_rewards) / len(total_rewards))
-			msg = "Average reward: {:04.2f} +/- {:04.2f}".format(avg_reward, sigma_reward)
+			msg = "[Training] Average reward: {:04.2f} +/- {:04.2f}".format(avg_reward, sigma_reward)
 			self.logger.info(msg)
   
 			self.logger.info("- Training done.")
 			export_plot(scores_eval, "Score", self.config.plot_output)
+			self.evaluate()
 
 
 	def evaluate(self, env=None, num_episodes=1):
 		if env==None:
 			env = self.env
+		env.set_greedy_mode()
 		paths, rewards = self.sample_path(env, num_episodes)
 		avg_reward = np.mean(rewards)
 		sigma_reward = np.sqrt(np.var(rewards) / len(rewards))
-		msg = "Average reward: {:04.2f} +/- {:04.2f}".format(avg_reward, sigma_reward)
+		msg = "[Evaluation] Average reward: {:04.2f} +/- {:04.2f}".format(avg_reward, sigma_reward)
 		self.logger.info(msg)
+		env.close_greedy_mode()
 		return avg_reward
 
 
@@ -326,12 +337,6 @@ class PG(object):
 			os.mkdir(_path_net_prefix)
 		# initialize
 		self.initialize()
-		# record one game at the beginning
-		if self.config.evaluate:
-			self.evaluate()
 		# model
 		self.train()
-		# record one game at the end
-		if self.config.evaluate:
-			self.evaluate()
 
