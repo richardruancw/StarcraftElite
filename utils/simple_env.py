@@ -91,9 +91,12 @@ class SimpleScEnv(object):
 
 
 class SimpleScEnvCountinous(SimpleScEnv):
-    def __init__(self, env):
+    def __init__(self, env, rand_explore_prob=None):
+        assert rand_explore_prob is None or ((rand_explore_prob >= 0) and (rand_explore_prob <= 1))
         super(SimpleScEnvCountinous, self).__init__(env)
 
+        self.rand_explore_prob = rand_explore_prob
+        self._cached_rand_explore_prob = None
         self.action_dim = ACTION_DIM_COUNTINOUS
         self.observation_dim = [len(SCREEN_FEATURES_IDX), MAP_SIZE, MAP_SIZE]
 
@@ -103,10 +106,24 @@ class SimpleScEnvCountinous(SimpleScEnv):
         x = x * (MAP_SIZE / 2.0) + MAP_SIZE / 2.0
         return int(max(0, min(x, MAP_SIZE - 1)))
 
+    def set_greedy_mode(self):
+        if self.rand_explore_prob is not None:
+            self._cached_rand_explore_prob = self.rand_explore_prob
+            self.rand_explore_prob = 0
+
+    def close_greedy_mode(self):
+        if self._cached_rand_explore_prob is not None:
+            self.rand_explore_prob = self._cached_rand_explore_prob
+
     def step(self, move_action, attack_action, attack_prob):
         assert len(move_action) == len(attack_action), "The move and attack action should have the same dimension!"
         assert len(move_action) + len(attack_action) + 1 == self.action_dim, "The total input dimension doesn't equal to {} !".format(self.action_dim)
         assert (attack_prob >= 0) and (attack_prob <= 1), "The attack probability should be between 0 and 1! The input is {}".format(attack_prob)
+
+        # random attack/move for exploration
+        if self.rand_explore_prob is not None:
+            if np.random.rand() < self.rand_explore_prob:
+                attack_prob = np.random.rand()
 
         # with attack probability to attack
         attack_flag = 1 if np.random.rand() < attack_prob else 0
@@ -119,6 +136,11 @@ class SimpleScEnvCountinous(SimpleScEnv):
 
         # the inputs are bounded between -1 and 1
         agent_action = [min(max(x, -1), 1) for x in agent_action]
+
+        # random select and target for exploration
+        if self.rand_explore_prob is not None:
+            if np.random.rand() < self.rand_explore_prob:
+                agent_action = np.random.rand(len(agent_action))
 
         # check bounds for position
         from_pos = [self._position_map(x) for x in agent_action[:2]]
