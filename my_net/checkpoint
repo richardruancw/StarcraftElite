@@ -1,0 +1,2 @@
+model_checkpoint_path: "/Users/mingxiangchen/Desktop/234proj/StarcraftElite/my_net/save_net.ckpt"
+all_model_checkpoint_paths: "/Users/mingxiangchen/Desktop/234proj/StarcraftElite/my_net/save_net.ckpt"

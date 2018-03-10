@@ -9,7 +9,7 @@ _path_log = "/".join(_path.split('/')[:-1])+"log.txt"
 sys.path.insert(0, _path_utils)
 sys.path.insert(0, _path_models)
 from DDQN_model import DDQN
-from simple_env import SimpleScEnvDiscrete
+from simple_env2 import SimpleScEnvDiscrete
 
 from collections import namedtuple
 
@@ -73,13 +73,13 @@ def run_loop(env, agent, max_episodes = 300, max_steps = 20000):
 flags.FLAGS(sys.argv)
 steps = 2000
 step_mul = 20
-with sc2_env.SC2Env(map_name="DefeatZerglingsAndBanelings",
+with sc2_env.SC2Env(map_name="MoveToBeacon",
                     step_mul=1,
                     visualize=True,
                     game_steps_per_episode=steps * step_mul) as env:
-    simpleSC = SimpleScEnvDiscrete(env, split_base = 8)
+    simpleSC = SimpleScEnvDiscrete(env, split_base = 1)
 
-    DDQN_agent = DDQN(simpleSC.num_actions, 5*64*64,
+    DDQN_agent = DDQN(simpleSC.num_actions, 17*64*64,
                       learning_rate=0.01,
                       reward_decay=1.0,
                       e_greedy=0.8,
