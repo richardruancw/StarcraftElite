@@ -22,3 +22,5 @@ policy_gradient_net/checkpoint
 *.txt
 
 *.png
+
+policy_gradient_net_4/checkpoint

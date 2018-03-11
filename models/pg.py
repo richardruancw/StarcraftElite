@@ -6,7 +6,6 @@ _path = os.path.dirname(os.path.abspath(__file__))
 _path_utils = "/".join(_path.split('/')[:-1])+"/utils/"
 _path_models = "/".join(_path.split('/')[:-1])+"/models/"
 _path_net_prefix = "/".join(_path.split('/')[:-1])+"/policy_gradient_net/"
-_path_net = "/".join(_path.split('/')[:-1])+"/policy_gradient_net/policy_gradient.ckpt"
 sys.path.insert(0, _path_utils)
 sys.path.insert(0, _path_models)
 from general import get_logger, Progbar, export_plot
@@ -46,6 +45,10 @@ class PG(object):
 		self.scheduler = LinearSchedule(self.config.rand_begin, \
 										self.config.rand_end,\
 										self.config.rand_steps)
+
+		self._path_net = "/".join(_path.split('/')[:-1]) \
+						 + "/policy_gradient_net_" \
+						 + str(self.config.history_mul) + "/policy_gradient.ckpt"
 
 		# build model
 		self.build()
@@ -118,8 +121,8 @@ class PG(object):
 		self.add_summary()
 		# initiliaze all variables
 		if(self.config.restore):
-			self.saver.restore(self.sess, _path_net)
-			msg = "[Saver] restore model from {}".format(_path_net)
+			self.saver.restore(self.sess, self._path_net)
+			msg = "[Saver] restore model from {}".format(self._path_net)
 			self.logger.info(msg)
 		else:
 			init = tf.global_variables_initializer()
@@ -281,7 +284,7 @@ class PG(object):
 				self.evaluate(num_episodes=self.config.eval_batch_size)
 
 			if(t % self.config.save_freq == 0):
-				save_path = self.saver.save(self.sess, _path_net)
+				save_path = self.saver.save(self.sess, self._path_net)
 				msg = "[Saver] save model to {}".format(save_path)
 				self.logger.info(msg)
 
