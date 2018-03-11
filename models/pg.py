@@ -38,7 +38,7 @@ class PG(object):
 
 		self.env = env
 		temp = self.env.observation_dim
-		self.observation_dim = [temp[1], temp[2], temp[0]]
+		self.observation_dim = [temp[1], temp[2], temp[0]*self.config.history_mul]
 		self.move_action_dim = (self.env.action_dim - 1) / 2
 		self.attack_action_dim = (self.env.action_dim - 1) / 2
 
@@ -117,8 +117,15 @@ class PG(object):
 		# tensorboard stuff
 		self.add_summary()
 		# initiliaze all variables
-		init = tf.global_variables_initializer()
-		self.sess.run(init)
+		if(self.config.restore):
+			self.saver.restore(self.sess, _path_net)
+			msg = "[Saver] restore model from {}".format(_path_net)
+			self.logger.info(msg)
+		else:
+			init = tf.global_variables_initializer()
+			self.sess.run(init)
+			msg = "[Saver] initialize new model, no restore"
+			self.logger.info(msg)
   
   
 	def add_summary(self):
@@ -178,14 +185,18 @@ class PG(object):
 			state = env.reset().transpose([1, 2, 0])
 			states, actions, rewards, flags = [], [], [], []
 			episode_reward = 0
+			li_state = [state] * self.config.history_mul
   
 			for step in range(self.config.max_ep_len):
-				states.append(state)
+				stacked_state = np.concatenate(li_state, axis=2)
+				states.append(stacked_state)
 				move_action, attack_action, attack_prob = self.sess.run(
 					[self.sampled_move_action, self.sampled_attack_action, self.attack_prob],
-					feed_dict={self.observation_placeholder: np.expand_dims(state, axis=0)})
-				state, reward, action, flag = env.step(move_action, attack_action, attack_prob)
-				state = state.transpose([1, 2, 0])
+					feed_dict={self.observation_placeholder: np.expand_dims(stacked_state, axis=0)})
+				single_state, reward, action, flag = env.step(move_action, attack_action, attack_prob)
+				single_state = single_state.transpose([1, 2, 0])
+				li_state.append(single_state)
+				li_state = li_state[(len(li_state)-4):]
 				actions.append(action)
 				rewards.append(reward)
 				flags.append(flag)
@@ -266,8 +277,13 @@ class PG(object):
 		scores_eval = [] # list of scores computed at iteration time
 
 		for t in range(self.config.num_batches):
-			save_path = self.saver.save(self.sess, _path_net)
-			print("Save to path: " + save_path)
+			if (t % self.config.eval_freq == 0):
+				self.evaluate(num_episodes=self.config.eval_batch_size)
+
+			if(t % self.config.save_freq == 0):
+				save_path = self.saver.save(self.sess, _path_net)
+				msg = "[Saver] save model to {}".format(save_path)
+				self.logger.info(msg)
 
 			# update the random exploration prob
 			self.scheduler.update(t)
@@ -316,7 +332,6 @@ class PG(object):
   
 			self.logger.info("- Training done.")
 			export_plot(scores_eval, "Score", self.config.plot_output)
-			self.evaluate()
 
 
 	def evaluate(self, env=None, num_episodes=1):
