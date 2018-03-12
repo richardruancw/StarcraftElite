@@ -199,7 +199,7 @@ class PG(object):
 				single_state, reward, action, flag = env.step(move_action, attack_action, attack_prob)
 				single_state = single_state.transpose([1, 2, 0])
 				li_state.append(single_state)
-				li_state = li_state[(len(li_state)-4):]
+				li_state = li_state[(len(li_state)-self.config.history_mul):]
 				actions.append(action)
 				rewards.append(reward)
 				flags.append(flag)
