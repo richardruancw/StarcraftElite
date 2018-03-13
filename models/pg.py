@@ -38,8 +38,8 @@ class PG(object):
 		self.env = env
 		temp = self.env.observation_dim
 		self.observation_dim = [temp[1], temp[2], temp[0]*self.config.history_mul]
-		self.move_action_dim = (self.env.action_dim - 1) / 2
-		self.attack_action_dim = (self.env.action_dim - 1) / 2
+		self.move_action_dim = int((self.env.action_dim - 1) / 2)
+		self.attack_action_dim = int((self.env.action_dim - 1) / 2)
 
 		self.lr = self.config.learning_rate
 		self.scheduler = LinearSchedule(self.config.rand_begin, \
