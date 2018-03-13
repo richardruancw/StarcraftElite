@@ -12,25 +12,24 @@ class config():
     model_output = output_path + "model.weights/"
     log_path = output_path + "log.txt"
     plot_output = output_path + "Policy_gradient.png"
-    summary_freq = 5
-    eval_freq = 5
+    summary_freq = 1
     save_freq = 5
 
     
     # model and training config
-    mode = "TD" # value can be "TD" or "MC"
+    mode = "MC" # value can be "TD" or "MC"
     num_batches = 100 # number of batches trained on
-    batch_size = 20 # number of steps used to compute each policy update, default is 1000
-    max_ep_len = 20 # maximum episode length
+    batch_size = 100 # number of steps used to compute each policy update, default is 1000
+    max_ep_len = 100 # maximum episode length
     eval_batch_size = batch_size
     rand_begin = 0.2
     rand_end = 0
     rand_steps = num_batches
     learning_rate = 3e-2
-    gamma = 0.9 # the discount factor
+    gamma = 0.98 # the discount factor
     use_baseline = True 
     normalize_advantage = True
-    history_mul = 4
+    history_mul = 1
     restore = False
 
     # since we start new episodes for each batch

@@ -59,6 +59,7 @@ class PG(object):
 		self.action_placeholder = tf.squeeze(tf.placeholder(tf.float32, [None, self.move_action_dim]))
 		self.attack_flag_placeholder = tf.placeholder(tf.float32, [None])
 		self.advantage_placeholder = tf.placeholder(tf.float32, [None])
+		self.global_step = tf.Variable(0)
   
   
 	def build_policy_network_op(self, scope = "policy_network"):
@@ -89,7 +90,7 @@ class PG(object):
   
 	def add_optimizer_op(self):
 		optimizer = tf.train.AdamOptimizer(learning_rate=self.lr)
-		self.train_op = optimizer.minimize(self.loss)
+		self.train_op = optimizer.minimize(self.loss, global_step=self.global_step)
   
   
 	def add_baseline_op(self, scope = "baseline"):
@@ -156,16 +157,13 @@ class PG(object):
 		self.eval_reward = 0.
   
 
-	def update_averages(self, rewards, scores_eval):
+	def update_averages(self, rewards):
 		self.avg_reward = np.mean(rewards)
 		self.max_reward = np.max(rewards)
 		self.std_reward = np.sqrt(np.var(rewards) / len(rewards))
-  
-		if len(scores_eval) > 0:
-			self.eval_reward = scores_eval[-1]
-  
-  
-	def record_summary(self, t):
+
+
+	def record_summary(self):
 		fd = {
 		  self.avg_reward_placeholder: self.avg_reward,
 		  self.max_reward_placeholder: self.max_reward,
@@ -174,7 +172,7 @@ class PG(object):
 		}
 		summary = self.sess.run(self.merged, feed_dict=fd)
 		# tensorboard stuff
-		self.file_writer.add_summary(summary, t)
+		self.file_writer.add_summary(summary, self.global_step.eval(self.sess))
   
   
 	def sample_path(self, env, episodes = None):
@@ -277,12 +275,8 @@ class PG(object):
 		last_record = 0
 
 		self.init_averages()
-		scores_eval = [] # list of scores computed at iteration time
 
 		for t in range(self.config.num_batches):
-			if (t % self.config.eval_freq == 0):
-				self.evaluate(num_episodes=self.config.eval_batch_size)
-
 			if(t % self.config.save_freq == 0):
 				save_path = self.saver.save(self.sess, self._path_net)
 				msg = "[Saver] save model to {}".format(save_path)
@@ -292,9 +286,11 @@ class PG(object):
 			self.scheduler.update(t)
 			self.env.rand_explore_prob = self.scheduler.epsilon
 
+			# evaluate before training
+			self.eval_reward = self.evaluate(num_episodes=int(self.config.eval_batch_size / 5))
+
 			# collect a minibatch of samples
 			paths, total_rewards = self.sample_path(self.env)
-			scores_eval = scores_eval + total_rewards
 
 			# process the data based on mode
 			if (self.config.mode == "MC"):
@@ -324,8 +320,8 @@ class PG(object):
   
 			# tf stuff
 			if (t % self.config.summary_freq == 0):
-				self.update_averages(total_rewards, scores_eval)
-				self.record_summary(t)
+				self.update_averages(total_rewards)
+				self.record_summary()
 
 			# compute reward statistics for this batch and log
 			avg_reward = np.mean(total_rewards)
@@ -334,7 +330,6 @@ class PG(object):
 			self.logger.info(msg)
   
 			self.logger.info("- Training done.")
-			export_plot(scores_eval, "Score", self.config.plot_output)
 
 
 	def evaluate(self, env=None, num_episodes=1):
@@ -351,8 +346,6 @@ class PG(object):
 
 
 	def run(self):
-		if(not os.path.exists(_path_net_prefix)):
-			os.mkdir(_path_net_prefix)
 		# initialize
 		self.initialize()
 		# model
