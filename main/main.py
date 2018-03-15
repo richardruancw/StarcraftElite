@@ -50,7 +50,7 @@ def run_loop(env, agent, max_episodes = 300, max_steps = 20000):
                     total_reward+=reward
                     observation_ = observation_.reshape([-1])
                     agent.store_transition(observation, action, reward, observation_)
-                    if (step > 1000) and (step % 50 == 0):
+                    if (step > 50000) and (step % 2000 == 0):
                         print "Episode: "+str(episode)+"  Step: "+str(step)+"  Reward: "+str(total_reward)
                         agent.learn(sess)
                     observation = observation_
@@ -85,7 +85,8 @@ with sc2_env.SC2Env(map_name="MoveToBeacon",
                       e_greedy=0.9,
                       replace_target_iter=200,
                       memory_size=20000,
-                      e_greedy_increment = 0.0001
+                      e_greedy_increment = 0.0001,
+                      batch_size=10000,
                       # output_graph=True
                       )
     run_loop(simpleSC, DDQN_agent, max_episodes = 30000, max_steps = 20000000)
