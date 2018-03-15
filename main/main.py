@@ -32,8 +32,8 @@ def run_loop(env, agent, max_episodes = 300, max_steps = 20000):
         f.write("Rewards\n")
     try:
         with tf.Session() as sess:
-            saver.restore(sess, _path_net)
-            # sess.run(tf.global_variables_initializer())
+            # saver.restore(sess, _path_net)
+            sess.run(tf.global_variables_initializer())
 
             for episode in xrange(max_episodes):
                 save_path = saver.save(sess, _path_net)
